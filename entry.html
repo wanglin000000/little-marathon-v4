@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>小小马拉松 - 北京幼师实验幼儿园定州园</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+      background: linear-gradient(135deg, #E8F5E9 0%, #C8E6C9 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .container {
+      max-width: 360px;
+      width: 100%;
+      text-align: center;
+    }
+    .logo-area {
+      margin-bottom: 30px;
+    }
+    .logo-icon {
+      font-size: 80px;
+      margin-bottom: 16px;
+    }
+    .title {
+      font-size: 28px;
+      font-weight: bold;
+      color: #1B5E20;
+      margin-bottom: 8px;
+      line-height: 1.3;
+    }
+    .subtitle {
+      font-size: 16px;
+      color: #4CAF50;
+      margin-bottom: 40px;
+    }
+    .card {
+      background: white;
+      border-radius: 20px;
+      padding: 30px 24px;
+      box-shadow: 0 8px 32px rgba(76, 175, 80, 0.2);
+    }
+    .event-theme {
+      display: inline-block;
+      background: linear-gradient(135deg, #4CAF50, #81C784);
+      color: white;
+      padding: 12px 24px;
+      border-radius: 30px;
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 24px;
+    }
+    .desc {
+      color: #666;
+      font-size: 15px;
+      line-height: 1.6;
+      margin-bottom: 30px;
+    }
+    .btn-login {
+      width: 100%;
+      background: linear-gradient(135deg, #4CAF50, #66BB6A);
+      color: white;
+      border: none;
+      padding: 18px;
+      border-radius: 30px;
+      font-size: 20px;
+      font-weight: bold;
+      cursor: pointer;
+      box-shadow: 0 4px 15px rgba(76, 175, 80, 0.4);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .btn-login:active {
+      transform: scale(0.98);
+      box-shadow: 0 2px 8px rgba(76, 175, 80, 0.3);
+    }
+    .info {
+      margin-top: 24px;
+      font-size: 13px;
+      color: #999;
+    }
+    .footer {
+      margin-top: 40px;
+      color: #81C784;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo-area">
+      <div class="logo-icon">🏃</div>
+      <h1 class="title">第一届小小马拉松</h1>
+      <p class="subtitle">北京幼师实验幼儿园定州园</p>
+    </div>
+
+    <div class="card">
+      <div class="event-theme">🌱 雨润新芽 绿色地球</div>
+      <p class="desc">
+        欢迎参加环保亲子运动会<br>
+        点击下方按钮参与活动，记录美好时刻！
+      </p>
+      <button class="btn-login" id="btnLogin">
+        🎮 一键参与活动
+      </button>
+      <p class="info">无需注册，扫码即可参与</p>
+    </div>
+
+    <p class="footer">让运动成为习惯 · 让童年充满活力</p>
+  </div>
+
+  <script>
+    // 生成或获取用户ID
+    function getUserId() {
+      let userId = localStorage.getItem('marathon_user_id');
+      if (!userId) {
+        userId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+        localStorage.setItem('marathon_user_id', userId);
+      }
+      return userId;
+    }
+
+    // 检查是否有未完成的报名信息
+    function checkExistingUser() {
+      const userData = localStorage.getItem('marathon_user_info');
+      if (userData) {
+        try {
+          const info = JSON.parse(userData);
+          if (info.name && info.grade && info.className) {
+            // 已填写信息，跳转到运动页
+            window.location.href = 'index.html';
+            return true;
+          }
+        } catch (e) {}
+      }
+      return false;
+    }
+
+    // 登录并跳转
+    document.getElementById('btnLogin').addEventListener('click', function() {
+      getUserId(); // 确保用户ID存在
+      if (!checkExistingUser()) {
+        window.location.href = 'info.html';
+      }
+    });
+
+    // 页面加载时检查
+    window.addEventListener('DOMContentLoaded', function() {
+      getUserId();
+      // 延迟检查，避免跳转过快
+      setTimeout(function() {
+        checkExistingUser();
+      }, 100);
+    });
+  </script>
+</body>
+</html>
