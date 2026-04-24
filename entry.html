@@ -6,28 +6,27 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <meta http-equiv="Cache" content="no-cache">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <!-- iOS Safari 兼容性 -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="format-detection" content="telephone=no">
   <title>小小马拉松 - 北京幼师实验幼儿园定州园</title>
   <script>
     // 强制刷新版本号 - 每次部署更新此版本
-    window.APP_VERSION = '2026042401';
-    // 强制从服务器获取最新内容
-    if ('caches' in window) {
-      caches.keys().then(function(names) {
-        names.forEach(function(name) {
-          if (name.indexOf('marathon') !== -1) {
-            caches.delete(name);
-          }
+    window.APP_VERSION = '2026042402';
+    // iOS Safari: 禁用Service Worker，改用版本刷新
+    if (!('serviceWorker' in navigator) || /iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+      // iOS设备跳过Service Worker，使用meta刷新
+    } else {
+      // Android/其他设备注册Service Worker
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js?v=' + Date.now()).then(function() {
+          console.log('Service Worker registered');
+        }).catch(function(err) {
+          console.log('SW registration failed:', err);
         });
-      });
-    }
-    // 注册Service Worker强制获取最新版本
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js?v=' + Date.now()).then(function() {
-        console.log('Service Worker registered');
-      }).catch(function(err) {
-        console.log('SW registration failed:', err);
-      });
+      }
     }
   </script>
   <style>
