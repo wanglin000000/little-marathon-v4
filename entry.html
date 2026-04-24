@@ -1,6 +1,28 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
+<script>
+// ===== 强制版本检查 =====
+(function() {
+  const currentVersion = '2026042501';
+  const storedVersion = localStorage.getItem('marathon_version');
+  
+  if (storedVersion && storedVersion !== currentVersion) {
+    // 版本变更，强制刷新清除所有缓存
+    localStorage.clear();
+    sessionStorage.clear();
+    caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
+  }
+  
+  localStorage.setItem('marathon_version', currentVersion);
+  
+  // 清除旧的 marathon_data
+  Object.keys(localStorage).forEach(key => {
+    if (key.includes('marathon')) localStorage.removeItem(key);
+  });
+})();
+</script>
+
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -14,7 +36,7 @@
   <title>小小马拉松 - 北京幼师实验幼儿园定州园</title>
   <script>
     // 强制刷新版本号 - 每次部署更新此版本
-    window.APP_VERSION = '2026042403';
+    window.APP_VERSION = '2026042501';
   </script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
