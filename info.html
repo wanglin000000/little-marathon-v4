@@ -3,7 +3,19 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+  <meta http-equiv="Pragma" content="no-cache">
+  <meta http-equiv="Expires" content="0">
   <title>填写信息 - 小小马拉松</title>
+  <script>window.APP_VERSION = '20260424';
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js?v=' + Date.now()).then(function() {
+        console.log('Service Worker registered');
+      }).catch(function(err) {
+        console.log('SW registration failed:', err);
+      });
+    }
+  </script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     body {
