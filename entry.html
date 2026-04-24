@@ -14,20 +14,7 @@
   <title>小小马拉松 - 北京幼师实验幼儿园定州园</title>
   <script>
     // 强制刷新版本号 - 每次部署更新此版本
-    window.APP_VERSION = '2026042402';
-    // iOS Safari: 禁用Service Worker，改用版本刷新
-    if (!('serviceWorker' in navigator) || /iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-      // iOS设备跳过Service Worker，使用meta刷新
-    } else {
-      // Android/其他设备注册Service Worker
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.register('/sw.js?v=' + Date.now()).then(function() {
-          console.log('Service Worker registered');
-        }).catch(function(err) {
-          console.log('SW registration failed:', err);
-        });
-      }
-    }
+    window.APP_VERSION = '2026042403';
   </script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
