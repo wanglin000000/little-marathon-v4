@@ -740,6 +740,8 @@
     }
 
     // ===== 步数统计（带防作弊）=====
+    let motionAvailable = false;
+    
     function startStepCounting() {
       if (typeof DeviceMotionEvent !== 'undefined') {
         // iOS 13+ 需要请求权限
@@ -747,24 +749,22 @@
           DeviceMotionEvent.requestPermission()
             .then(function(response) {
               if (response === 'granted') {
-                addMotionListener();
+                motionAvailable = addMotionListener();
               }
             })
             .catch(function(e) {
               console.log('DeviceMotion permission denied');
             });
         } else {
-          addMotionListener();
+          motionAvailable = addMotionListener();
         }
       }
-
-      // 模拟步数（用于不支持加速度传感器的设备）
-      stepInterval = setInterval(function() {
-        simulateSteps();
-      }, 500);
     }
 
     function addMotionListener() {
+      let stepCount = 0;
+      let lastShakeTime = 0;
+      
       motionListener = function(event) {
         const acc = event.accelerometerIncludingGravity;
         if (!acc) return;
@@ -772,34 +772,32 @@
         const totalAcc = Math.sqrt(
           acc.x * acc.x + acc.y * acc.y + acc.z * acc.z
         );
-        const delta = Math.abs(totalAcc - lastAcceleration);
+        const delta = Math.abs(totalAcc - 9.8); // 减去重力加速度
         const now = Date.now();
 
-        // 阈值检测 + 时间间隔限制
-        if (delta > stepThreshold && (now - lastStepTime) > 250) {
-          gameState.steps++;
-          lastStepTime = now;
-          checkEncourage();
-          updateUI();
-          saveState();
+        // 阈值检测：检测明显晃动（走路时的震动）
+        // 静止时delta约0-0.5，走路时delta约1-3
+        if (delta > 2.0 && (now - lastStepTime) > 300) {
+          stepCount++;
+          // 连续3次明显晃动才计为1步（防止误触）
+          if (stepCount >= 3) {
+            gameState.steps++;
+            lastStepTime = now;
+            stepCount = 0;
+            checkEncourage();
+            updateUI();
+            saveState();
+          }
+        } else if (delta < 1.0) {
+          // 手机静止时重置计数器
+          stepCount = Math.max(0, stepCount - 1);
         }
 
         lastAcceleration = totalAcc;
       };
 
       window.addEventListener('devicemotion', motionListener);
-    }
-
-    function simulateSteps() {
-      if (!gameState.isRunning) return;
-      // 模拟正常步行速度：约每秒1-2步
-      const random = Math.random();
-      if (random > 0.4) {
-        gameState.steps++;
-        checkEncourage();
-        updateUI();
-        saveState();
-      }
+      return true;
     }
 
     function stopStepCounting() {
@@ -807,9 +805,10 @@
         window.removeEventListener('devicemotion', motionListener);
         motionListener = null;
       }
-      if (stepInterval) {
-        clearInterval(stepInterval);
-        stepInterval = null;
+      // 移除模拟步数的interval（如果存在）
+      if (window.stepIntervalId) {
+        clearInterval(window.stepIntervalId);
+        window.stepIntervalId = null;
       }
     }
 
@@ -860,15 +859,24 @@
     }
 
     function takePhoto() {
-      const input = document.getElementById('photoInput');
+      var input = document.getElementById('photoInput');
+      // 移除capture属性，让系统选择拍照模式
+      input.removeAttribute('capture');
       input.setAttribute('capture', 'environment');
-      input.click();
+      // 延迟点击确保在微信中生效
+      setTimeout(function() {
+        input.click();
+      }, 100);
     }
 
     function selectPhoto() {
-      const input = document.getElementById('photoInput');
+      var input = document.getElementById('photoInput');
+      // 移除capture属性，允许选择相册
       input.removeAttribute('capture');
-      input.click();
+      // 延迟点击确保在微信中生效
+      setTimeout(function() {
+        input.click();
+      }, 100);
     }
 
     document.getElementById('photoInput').addEventListener('change', function(e) {

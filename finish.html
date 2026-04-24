@@ -477,42 +477,52 @@
       try {
         const dataUrl = await generateShareImage();
 
-        // 尝试分享（如果是微信环境会自动弹出分享菜单）
-        if (navigator.share) {
-          const blob = await (await fetch(dataUrl)).blob();
-          const file = new File([blob], 'certificate.png', { type: 'image/png' });
-
-          await navigator.share({
-            files: [file],
-            title: '小小马拉松完赛证书',
-            text: '恭喜 ' + (userInfo?.name || '小朋友') + ' 完成第一届小小马拉松！'
-          });
-        } else {
-          // 非微信环境，提示保存
-          showToast('请长按图片保存后分享');
-          // 显示图片供用户保存
-          const imgWindow = window.open();
-          imgWindow.document.write('<img src="' + dataUrl + '" style="max-width:100%">');
-        }
+        // 在页面上显示分享图片预览，提示用户长按保存
+        showSharePreview(dataUrl);
+        
       } catch (e) {
         console.error('Share error:', e);
-        showToast('分享失败，请重试');
+        showToast('生成失败，请重试');
       }
 
       document.getElementById('btnShare').innerHTML = '📤 一键分享朋友圈';
     }
 
+    function showSharePreview(dataUrl) {
+      // 创建分享预览弹窗
+      var overlay = document.createElement('div');
+      overlay.id = 'shareOverlay';
+      overlay.style.cssText = 'position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,0.9);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px;';
+      
+      overlay.innerHTML = 
+        '<div style="color:white;text-align:center;margin-bottom:20px;font-size:18px;">' +
+        '<p style="margin-bottom:10px;">🎉 恭喜完成小小马拉松！</p>' +
+        '<p style="color:#FFD700;font-size:20px;font-weight:bold;">' + (userInfo?.name || '小小运动员') + '</p>' +
+        '</div>' +
+        '<img src="' + dataUrl + '" style="max-width:100%;max-height:60vh;border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,0.3);" id="sharePreviewImg">' +
+        '<div style="color:white;text-align:center;margin-top:20px;font-size:16px;line-height:1.8;">' +
+        '<p style="color:#4CAF50;font-weight:bold;">📱 分享到朋友圈</p>' +
+        '<p>1. 长按上方图片保存到相册</p>' +
+        '<p>2. 打开微信朋友圈</p>' +
+        '<p>3. 发布动态并添加这张图片</p>' +
+        '</div>' +
+        '<button onclick="closeSharePreview()" style="margin-top:20px;padding:12px 40px;background:#4CAF50;color:white;border:none;border-radius:25px;font-size:16px;">知道了</button>';
+      
+      document.body.appendChild(overlay);
+    }
+
+    function closeSharePreview() {
+      var overlay = document.getElementById('shareOverlay');
+      if (overlay) {
+        overlay.remove();
+      }
+    }
+
     async function shareImage() {
       try {
         const dataUrl = await generateShareImage();
-
-        // 创建下载链接
-        const link = document.createElement('a');
-        link.download = '小小马拉松完赛证书.png';
-        link.href = dataUrl;
-        link.click();
-
-        showToast('图片已保存');
+        // 弹出预览让用户保存
+        showSharePreview(dataUrl);
       } catch (e) {
         console.error('Save error:', e);
         showToast('保存失败，请重试');
