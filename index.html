@@ -860,23 +860,33 @@
 
     function takePhoto() {
       var input = document.getElementById('photoInput');
-      // 移除capture属性，让系统选择拍照模式
-      input.removeAttribute('capture');
-      input.setAttribute('capture', 'environment');
-      // 延迟点击确保在微信中生效
-      setTimeout(function() {
+      // 直接设置并点击，不延迟
+      input.setAttribute('accept', 'image/*');
+      input.setAttribute('capture', 'camera');
+      input.removeAttribute('multiple');
+      try {
         input.click();
-      }, 100);
+      } catch(e) {
+        // 微信环境兼容
+        var evt = document.createEvent('MouseEvents');
+        evt.initEvent('click', true, true);
+        input.dispatchEvent(evt);
+      }
     }
 
     function selectPhoto() {
       var input = document.getElementById('photoInput');
       // 移除capture属性，允许选择相册
+      input.setAttribute('accept', 'image/*');
       input.removeAttribute('capture');
-      // 延迟点击确保在微信中生效
-      setTimeout(function() {
+      try {
         input.click();
-      }, 100);
+      } catch(e) {
+        // 微信环境兼容
+        var evt = document.createEvent('MouseEvents');
+        evt.initEvent('click', true, true);
+        input.dispatchEvent(evt);
+      }
     }
 
     document.getElementById('photoInput').addEventListener('change', function(e) {
