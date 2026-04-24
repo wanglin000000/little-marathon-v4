@@ -7,13 +7,19 @@
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
   <title>小小马拉松 - 运动进行中</title>
-  <script>window.APP_VERSION = '2026042402';
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js?v=' + Date.now()).then(function() {
-        console.log('Service Worker registered');
-      }).catch(function(err) {
-        console.log('SW registration failed:', err);
-      });
+  <script>
+    window.APP_VERSION = '2026042403';
+    // iOS Safari禁用Service Worker
+    if (!('serviceWorker' in navigator) || /iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+      console.log('iOS detected, skipping Service Worker');
+    } else {
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js?v=' + Date.now()).then(function() {
+          console.log('Service Worker registered');
+        }).catch(function(err) {
+          console.log('SW registration failed:', err);
+        });
+      }
     }
   </script>
   <style>
