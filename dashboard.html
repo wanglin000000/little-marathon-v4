@@ -8,7 +8,6 @@
   const storedVersion = localStorage.getItem('marathon_version');
   
   if (storedVersion && storedVersion !== currentVersion) {
-    // 版本变更，强制刷新清除所有缓存
     localStorage.clear();
     sessionStorage.clear();
     caches.keys().then(keys => keys.forEach(k => caches.delete(k)));
@@ -16,13 +15,11 @@
   
   localStorage.setItem('marathon_version', currentVersion);
   
-  // 清除旧的 marathon_data
   Object.keys(localStorage).forEach(key => {
     if (key.includes('marathon')) localStorage.removeItem(key);
   });
 })();
 </script>
-
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
@@ -31,8 +28,330 @@
   <title>管理后台 - 小小马拉松</title>
   <script>
     window.APP_VERSION = '2026042501';
-    // Service Worker 已禁用 - 使用时间戳版本号彻底解决缓存
-    window.FORCE_REFRESH = Date.now();
+    // iOS Safari禁用Service Worker
+    if (!('serviceWorker' in navigator) || /iPhone|iPad|iPod/i.test(navigator.userAgent)) {
+      console.log('iOS detected, skipping Service Worker');
+    } else {
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.register('/sw.js?v=' + Date.now()).then(function() {
+          console.log('Service Worker registered');
+        }).catch(function(err) {
+          console.log('SW registration failed:', err);
+        });
+      }
+    }
+  </script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif;
+      background: #f5f5f5;
+      min-height: 100vh;
+    }
+    .header {
+      background: linear-gradient(135deg, #4CAF50, #66BB6A);
+      color: white;
+      padding: 16px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .header h1 {
+      font-size: 18px;
+    }
+    .btn-logout {
+      background: rgba(255,255,255,0.2);
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .stats-bar {
+      display: flex;
+      justify-content: space-around;
+      background: white;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    .stat-item {
+      text-align: center;
+    }
+    .stat-value {
+      font-size: 24px;
+      font-weight: bold;
+      color: #4CAF50;
+    }
+    .stat-label {
+      font-size: 12px;
+      color: #999;
+      margin-top: 4px;
+    }
+    .section {
+      background: white;
+      margin: 0 12px 12px;
+      border-radius: 12px;
+      overflow: hidden;
+    }
+    .section-header {
+      padding: 14px 16px;
+      border-bottom: 1px solid #eee;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .section-title {
+      font-size: 16px;
+      font-weight: bold;
+      color: #333;
+    }
+    .btn-export {
+      background: #4CAF50;
+      color: white;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 20px;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .rank-list {
+      max-height: 60vh;
+      overflow-y: auto;
+    }
+    .rank-item {
+      display: flex;
+      align-items: center;
+      padding: 14px 16px;
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .rank-item:last-child {
+      border-bottom: none;
+    }
+    .rank-num {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: #f5f5f5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 14px;
+      margin-right: 12px;
+    }
+    .rank-num.top1 { background: #FFD700; color: #fff; }
+    .rank-num.top2 { background: #C0C0C0; color: #fff; }
+    .rank-num.top3 { background: #CD7F32; color: #fff; }
+    .rank-info {
+      flex: 1;
+    }
+    .rank-name {
+      font-size: 16px;
+      font-weight: bold;
+      color: #333;
+    }
+    .rank-class {
+      font-size: 13px;
+      color: #999;
+    }
+    .rank-stats {
+      text-align: right;
+    }
+    .rank-steps {
+      font-size: 18px;
+      font-weight: bold;
+      color: #4CAF50;
+    }
+    .rank-cp {
+      font-size: 12px;
+      color: #FF9800;
+    }
+    .status-badge {
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 11px;
+      margin-left: 8px;
+    }
+    .status-done { background: #E8F5E9; color: #4CAF50; }
+    .status-running { background: #FFF3E0; color: #FF9800; }
+    .empty-state {
+      padding: 60px 20px;
+      text-align: center;
+      color: #999;
+    }
+    .empty-icon {
+      font-size: 60px;
+      margin-bottom: 16px;
+    }
+    .refresh-time {
+      font-size: 12px;
+      color: #999;
+      text-align: center;
+      padding: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>📊 管理后台</h1>
+    <button class="btn-logout" onclick="logout()">退出</button>
+  </div>
+
+  <div class="stats-bar">
+    <div class="stat-item">
+      <div class="stat-value" id="totalCount">0</div>
+      <div class="stat-label">参赛人数</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-value" id="finishedCount">0</div>
+      <div class="stat-label">已完成</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-value" id="avgSteps">0</div>
+      <div class="stat-label">平均步数</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-header">
+      <span class="section-title">🏃 实时排名</span>
+      <button class="btn-export" onclick="exportCSV()">📥 导出CSV</button>
+    </div>
+    <div class="rank-list" id="rankList">
+      <div class="empty-state">
+        <div class="empty-icon">📭</div>
+        <p>暂无参赛数据</p>
+      </div>
+    </div>
+    <div class="refresh-time" id="refreshTime">最后更新: --</div>
+  </div>
+
+  <script>
+    // 检查登录状态
+    if (sessionStorage.getItem('admin_logged') !== 'true') {
+      window.location.href = 'admin.html';
+    }
+
+    let allData = [];
+
+    window.addEventListener('DOMContentLoaded', function() {
+      loadData();
+      // 每10秒自动刷新
+      setInterval(loadData, 10000);
+    });
+
+    function loadData() {
+      const globalData = JSON.parse(localStorage.getItem('marathon_global') || '{}');
+      const users = JSON.parse(localStorage.getItem('marathon_user_info') || '{}');
+
+      allData = Object.keys(globalData).map(function(userId) {
+        const data = globalData[userId];
+        const cpCount = data.checkpoints ? data.checkpoints.filter(Boolean).length : 0;
+        return {
+          userId: userId,
+          name: data.name || '匿名',
+          grade: data.grade || '',
+          className: data.className || '',
+          steps: data.steps || 0,
+          checkpoints: cpCount,
+          isFinished: data.isFinished || false,
+          updateTime: data.updateTime || Date.now()
+        };
+      });
+
+      // 按步数排序
+      allData.sort(function(a, b) {
+        return b.steps - a.steps;
+      });
+
+      renderStats();
+      renderList();
+      updateRefreshTime();
+    }
+
+    function renderStats() {
+      const total = allData.length;
+      const finished = allData.filter(function(d) { return d.isFinished; }).length;
+      const avg = total > 0 ? Math.round(allData.reduce(function(s, d) { return s + d.steps; }, 0) / total) : 0;
+
+      document.getElementById('totalCount').textContent = total;
+      document.getElementById('finishedCount').textContent = finished;
+      document.getElementById('avgSteps').textContent = avg;
+    }
+
+    function renderList() {
+      const list = document.getElementById('rankList');
+
+      if (allData.length === 0) {
+        list.innerHTML = '<div class="empty-state"><div class="empty-icon">📭</div><p>暂无参赛数据</p></div>';
+        return;
+      }
+
+      list.innerHTML = allData.map(function(item, idx) {
+        var rankClass = '';
+        if (idx === 0) rankClass = 'top1';
+        else if (idx === 1) rankClass = 'top2';
+        else if (idx === 2) rankClass = 'top3';
+
+        return '<div class="rank-item">' +
+          '<div class="rank-num ' + rankClass + '">' + (idx + 1) + '</div>' +
+          '<div class="rank-info">' +
+            '<div class="rank-name">' + item.name + '</div>' +
+            '<div class="rank-class">' + item.grade + ' ' + item.className + '</div>' +
+          '</div>' +
+          '<div class="rank-stats">' +
+            '<div class="rank-steps">' + item.steps + '步' + '</div>' +
+            '<div class="rank-cp">打卡 ' + item.checkpoints + '/7' + '</div>' +
+            '<span class="status-badge ' + (item.isFinished ? 'status-done' : 'status-running') + '">' +
+              (item.isFinished ? '已完成' : '进行中') +
+            '</span>' +
+          '</div>' +
+        '</div>';
+      }).join('');
+    }
+
+    function updateRefreshTime() {
+      var now = new Date();
+      var time = String(now.getHours()).padStart(2, '0') + ':' +
+                 String(now.getMinutes()).padStart(2, '0') + ':' +
+                 String(now.getSeconds()).padStart(2, '0');
+      document.getElementById('refreshTime').textContent = '最后更新: ' + time;
+    }
+
+    function exportCSV() {
+      if (allData.length === 0) {
+        alert('暂无数据可导出');
+        return;
+      }
+
+      var csv = '\uFEFF'; // BOM for Excel
+      csv += '\u6392\u540D,\u59D3\u540D,\u5E74\u7EA7,\u73ED\u7EA7,\u6B65\u6570,\u6253\u5361\u8FDB\u5EA6,\u5B8C\u6210\u72B6\u6001\n';
+
+      allData.forEach(function(item, idx) {
+        csv += (idx + 1) + ',';
+        csv += '="' + item.name + '",';
+        csv += '="' + item.grade + '",';
+        csv += '="' + item.className + '",';
+        csv += item.steps + ',';
+        csv += item.checkpoints + '/7,';
+        csv += (item.isFinished ? '\u5DF2\u5B8C\u6210' : '\u8FDB\u884C\u4E2D') + '\n';
+      });
+
+      var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      var link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = '\u5C0F\u9E3F\u9A6C\u62C6\u6392\u540D_' + new Date().toISOString().slice(0, 10) + '.csv';
+      link.click();
+    }
+
+    function logout() {
+      sessionStorage.removeItem('admin_logged');
+      window.location.href = 'admin.html';
+    }
   </script>
 </body>
 </html>
