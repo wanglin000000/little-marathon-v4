@@ -8,7 +8,7 @@
   <meta http-equiv="Expires" content="0">
   <title>小小马拉松 - 运动进行中</title>
   <script>
-    window.APP_VERSION = '2026042403';
+    window.APP_VERSION = '2026042404';
     // iOS Safari禁用Service Worker
     if (!('serviceWorker' in navigator) || /iPhone|iPad|iPod/i.test(navigator.userAgent)) {
       console.log('iOS detected, skipping Service Worker');
@@ -261,10 +261,10 @@
       bottom: 0;
       left: 0;
       right: 0;
-      background: white;
+      background: linear-gradient(180deg, #ffffff 0%, #f5f9f5 100%);
       padding: 24px 20px 40px;
       border-radius: 20px 20px 0 0;
-      box-shadow: 0 -4px 20px rgba(0,0,0,0.15);
+      box-shadow: 0 -8px 30px rgba(76, 175, 80, 0.25);
       z-index: 1000;
       transform: translateY(100%);
       transition: transform 0.3s ease;
@@ -310,9 +310,12 @@
       cursor: pointer;
       font-size: 14px;
       color: #666;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
     }
     .photo-btn:active {
-      background: #f0f0f0;
+      background: #e8f5e9;
+      border-color: #4CAF50;
     }
     .photo-preview {
       width: 80px;
@@ -866,33 +869,45 @@
 
     function takePhoto() {
       var input = document.getElementById('photoInput');
-      // 直接设置并点击，不延迟
       input.setAttribute('accept', 'image/*');
-      input.setAttribute('capture', 'camera');
+      input.setAttribute('capture', 'environment');
       input.removeAttribute('multiple');
-      try {
-        input.click();
-      } catch(e) {
-        // 微信环境兼容
-        var evt = document.createEvent('MouseEvents');
-        evt.initEvent('click', true, true);
-        input.dispatchEvent(evt);
-      }
+      // 微信环境兼容：延迟确保面板完全显示
+      setTimeout(function() {
+        try {
+          input.click();
+        } catch(e) {
+          try {
+            var evt = new MouseEvent('click', { bubbles: true, cancelable: true });
+            input.dispatchEvent(evt);
+          } catch(e2) {
+            var evt2 = document.createEvent('MouseEvents');
+            evt2.initEvent('click', true, true);
+            input.dispatchEvent(evt2);
+          }
+        }
+      }, 100);
     }
 
     function selectPhoto() {
       var input = document.getElementById('photoInput');
-      // 移除capture属性，允许选择相册
       input.setAttribute('accept', 'image/*');
       input.removeAttribute('capture');
-      try {
-        input.click();
-      } catch(e) {
-        // 微信环境兼容
-        var evt = document.createEvent('MouseEvents');
-        evt.initEvent('click', true, true);
-        input.dispatchEvent(evt);
-      }
+      // 微信环境兼容：延迟确保面板完全显示
+      setTimeout(function() {
+        try {
+          input.click();
+        } catch(e) {
+          try {
+            var evt = new MouseEvent('click', { bubbles: true, cancelable: true });
+            input.dispatchEvent(evt);
+          } catch(e2) {
+            var evt2 = document.createEvent('MouseEvents');
+            evt2.initEvent('click', true, true);
+            input.dispatchEvent(evt2);
+          }
+        }
+      }, 100);
     }
 
     document.getElementById('photoInput').addEventListener('change', function(e) {
